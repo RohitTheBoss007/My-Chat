@@ -192,7 +192,7 @@ public class ChatsFragment extends Fragment {
         public void setUserImage(String thumb_image, Context ctx){
 
             CircleImageView userImageView = (CircleImageView) mView.findViewById(R.id.user_single_image);
-            Glide.with(ctx).load(thumb_image).into(userImageView);
+            Glide.with(ctx).load(thumb_image).placeholder(R.drawable.profilepic).into(userImageView);
 
         }
 

@@ -1,5 +1,10 @@
 package com.example.android.mychat;
 
+import android.annotation.SuppressLint;
+import android.app.ProgressDialog;
+import android.media.MediaRecorder;
+import android.net.Uri;
+import android.os.Environment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -7,14 +12,18 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
+import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.android.mychat.Adapter.MessageAdapter;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -23,13 +32,20 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class ChatActivity extends AppCompatActivity {
+    private static final String LOG_TAG ="LOG" ;
     String chatUser;
     DatabaseReference root;
     EditText etmessage;
@@ -41,6 +57,12 @@ public class ChatActivity extends AppCompatActivity {
     int currentPage=1;
     private int itemPos = 0;
     LinearLayoutManager mLinearLayout;
+    ImageButton record;
+    StorageReference storage;
+    ProgressDialog mProgress;
+
+    MediaRecorder recorder;
+    String fileName=null;
 
     private String mLastKey = "";
     private String mPrevKey = "";
@@ -48,18 +70,25 @@ public class ChatActivity extends AppCompatActivity {
 
     List<Message> messageList;
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
         chatUser=getIntent().getStringExtra("Name");
         root=FirebaseDatabase.getInstance().getReference();
+        storage=FirebaseStorage.getInstance().getReference();
+        mProgress=new ProgressDialog(this);
         Toolbar toolbar=findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setTitle(chatUser);
         rvMessage=findViewById(R.id.rvMessage);
         swipeRefreshLayout=findViewById(R.id.swipeRefreshLayout);
+
+        record=findViewById(R.id.record);
+        fileName=Environment.getExternalStorageDirectory().getAbsolutePath();
+        fileName+="/rec_audio.3gp";
         etmessage=findViewById(R.id.etmessage);
         send=findViewById(R.id.imgSend);
         ImageView img=findViewById(R.id.img3);
@@ -110,6 +139,22 @@ public class ChatActivity extends AppCompatActivity {
                 itemPos = 0;
 
                 loadMessages();
+            }
+        });
+
+
+
+        record.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if(event.getAction()==MotionEvent.ACTION_DOWN){
+                    startRecording();
+                    Toast.makeText(ChatActivity.this,"Recording Started...",Toast.LENGTH_SHORT).show();
+                }
+                else if(event.getAction()==MotionEvent.ACTION_UP){
+                    stopRecording();
+                }
+                return false;
             }
         });
 
@@ -266,6 +311,71 @@ public class ChatActivity extends AppCompatActivity {
         swipeRefreshLayout.setRefreshing(false);
         mLinearLayout.scrollToPositionWithOffset(10, 0);
 
+
+    }
+
+    private void startRecording() {
+        recorder = new MediaRecorder();
+        recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+        recorder.setOutputFile(fileName);
+        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+
+        try {
+            recorder.prepare();
+        } catch (IOException e) {
+            Log.e(LOG_TAG, "prepare() failed");
+        }
+
+        recorder.start();
+    }
+
+    private void stopRecording() {
+        recorder.stop();
+        recorder.release();
+        recorder = null;
+        uploadAudio();
+    }
+
+    private void uploadAudio() {
+        mProgress.setMessage("Uploading Audio...");
+        mProgress.show();
+        String timeStamp = String.valueOf(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()));
+        StorageReference filepath=storage.child("Audio").child(timeStamp+".3gp");
+        Uri uri=Uri.fromFile(new File(fileName));
+        filepath.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                String audio_url=taskSnapshot.getDownloadUrl().toString();
+                mProgress.dismiss();
+                Toast.makeText(ChatActivity.this,"Uploading Finished",Toast.LENGTH_SHORT).show();
+
+                String cur_ref="messages/"+Common.currentUser.getUsername()+"/"+chatUser;
+                String user_ref="messages/"+chatUser+"/"+Common.currentUser.getUsername();
+
+                DatabaseReference push=root.child("messages").child(Common.currentUser.getUsername()).child(chatUser).push();
+                String pushID=push.getKey();
+
+                Map messageMap=new HashMap();
+                messageMap.put("message",audio_url);
+                messageMap.put("seen",false);
+                messageMap.put("type","audio");
+                messageMap.put("time",ServerValue.TIMESTAMP);
+                messageMap.put("sender",Common.currentUser.getUsername());
+
+
+                Map userMap=new HashMap();
+                userMap.put(cur_ref+"/"+pushID,messageMap);
+                userMap.put(user_ref+"/"+pushID,messageMap);
+                root.updateChildren(userMap, new DatabaseReference.CompletionListener() {
+                    @Override
+                    public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+
+                    }
+                });
+
+            }
+        });
 
     }
 }
