@@ -1,7 +1,9 @@
 package com.example.android.mychat;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Environment;
@@ -152,8 +154,14 @@ public class ChatActivity extends AppCompatActivity {
                     Toast.makeText(ChatActivity.this,"Recording Started...",Toast.LENGTH_SHORT).show();
                 }
                 else if(event.getAction()==MotionEvent.ACTION_UP){
-                    stopRecording();
+                    try{
+                        stopRecording();
+                    }catch(RuntimeException stopException){
+                        Toast.makeText(ChatActivity.this,"Hold to record,release to send",Toast.LENGTH_SHORT).show();
+                    }
+
                 }
+
                 return false;
             }
         });
@@ -334,7 +342,23 @@ public class ChatActivity extends AppCompatActivity {
         recorder.stop();
         recorder.release();
         recorder = null;
-        uploadAudio();
+        AlertDialog.Builder builder=new AlertDialog.Builder(this);
+        builder.setTitle("Do you want to upload this file?" );
+        builder.setIcon(R.drawable.ic_mic);
+        builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                uploadAudio();
+            }
+        });
+        builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        builder.show();
+
     }
 
     private void uploadAudio() {
