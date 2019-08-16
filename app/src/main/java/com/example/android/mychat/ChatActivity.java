@@ -426,6 +426,8 @@ public class ChatActivity extends AppCompatActivity {
 
     void resetChronometer()
     {
+        chronometer.stop();
+        running=false;
        chronometer.setBase(SystemClock.elapsedRealtime());
 
     }
