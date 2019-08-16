@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Environment;
+import android.os.SystemClock;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -17,6 +18,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Chronometer;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -63,6 +65,9 @@ public class ChatActivity extends AppCompatActivity {
     StorageReference storage;
     ProgressDialog mProgress;
 
+    Chronometer chronometer;
+    boolean running;
+
     MediaRecorder recorder;
     String fileName=null;
 
@@ -87,6 +92,8 @@ public class ChatActivity extends AppCompatActivity {
         getSupportActionBar().setTitle(chatUser);
         rvMessage=findViewById(R.id.rvMessage);
         swipeRefreshLayout=findViewById(R.id.swipeRefreshLayout);
+
+        chronometer=findViewById(R.id.chronometer);
 
         record=findViewById(R.id.record);
         fileName=Environment.getExternalStorageDirectory().getAbsolutePath();
@@ -150,10 +157,15 @@ public class ChatActivity extends AppCompatActivity {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if(event.getAction()==MotionEvent.ACTION_DOWN){
+                    chronometer.setVisibility(View.VISIBLE);
+                    startChronometer();
                     startRecording();
-                    Toast.makeText(ChatActivity.this,"Recording Started...",Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(ChatActivity.this,"Recording Started...",Toast.LENGTH_SHORT).show();
+
                 }
                 else if(event.getAction()==MotionEvent.ACTION_UP){
+                    resetChronometer();
+                    chronometer.setVisibility(View.GONE);
                     try{
                         stopRecording();
                     }catch(RuntimeException stopException){
@@ -400,6 +412,21 @@ public class ChatActivity extends AppCompatActivity {
 
             }
         });
+
+    }
+    void startChronometer()
+    {
+        if(!running)
+        {
+            chronometer.setBase(SystemClock.elapsedRealtime());
+            chronometer.start();
+            running=true;
+        }
+    }
+
+    void resetChronometer()
+    {
+       chronometer.setBase(SystemClock.elapsedRealtime());
 
     }
 }

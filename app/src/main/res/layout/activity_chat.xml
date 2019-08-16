@@ -47,6 +47,9 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_alignParentBottom="true">
+
+
+
         <android.support.design.widget.TextInputLayout
 
             android:layout_width="0dp"
@@ -54,6 +57,17 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp">
+            <Chronometer
+                android:id="@+id/chronometer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="8"
+                android:textColor="#095BFF"
+                android:layout_marginLeft="5dp"
+                android:textSize="20sp"
+                android:visibility="gone"
+                />
+
             <EditText android:id="@+id/etmessage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
