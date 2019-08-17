@@ -18,7 +18,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="jar:file:/F:/Andriod%20Studio/plugins/android/lib/android.jar!/images/material_design_icons/av/ic_mic_black_24dp.xml" />
+                                      <entry key="url" value="jar:file:/F:/Andriod%20Studio/plugins/android/lib/android.jar!/images/material_design_icons/av/ic_pause_circle_outline_black_24dp.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -28,12 +28,11 @@
                         </option>
                         <option name="values">
                           <map>
-                            <entry key="color" value="fffdfe" />
-                            <entry key="height" value="30" />
-                            <entry key="outputName" value="ic_mic" />
+                            <entry key="height" value="75" />
+                            <entry key="outputName" value="ic_pause_circle_75dp" />
                             <entry key="overrideSize" value="true" />
                             <entry key="sourceFile" value="C:\Users\ROHIT" />
-                            <entry key="width" value="30" />
+                            <entry key="width" value="75" />
                           </map>
                         </option>
                       </PersistentState>

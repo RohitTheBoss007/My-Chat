@@ -3,6 +3,7 @@ package com.example.android.mychat;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
@@ -22,6 +23,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
 import android.widget.Chronometer;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -43,6 +45,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.skyfishjy.library.RippleBackground;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,7 +72,7 @@ public class ChatActivity extends AppCompatActivity {
     StorageReference storage;
     ProgressDialog mProgress;
 
-    Chronometer chronometer;
+    Chronometer chronometer,chrono;
     boolean running;
 
     MediaRecorder recorder;
@@ -77,6 +80,10 @@ public class ChatActivity extends AppCompatActivity {
 
     private String mLastKey = "";
     private String mPrevKey = "";
+
+    Dialog audioDialog;
+
+    ImageButton rec,pause,reset,upload;
 
 
     List<Message> messageList;
@@ -164,9 +171,25 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
 
+        record.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
 
 
-        record.setOnTouchListener(new View.OnTouchListener() {
+
+            }
+        });
+
+        record.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                customDialog();
+            }
+        });
+
+
+
+      /*  record.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if(event.getAction()==MotionEvent.ACTION_DOWN){
@@ -195,7 +218,7 @@ public class ChatActivity extends AppCompatActivity {
 
                 return false;
             }
-        });
+        });  */
 
     }
 
@@ -437,17 +460,82 @@ public class ChatActivity extends AppCompatActivity {
     {
         if(!running)
         {
-            chronometer.setBase(SystemClock.elapsedRealtime());
-            chronometer.start();
+            chrono.setBase(SystemClock.elapsedRealtime());
+            chrono.start();
             running=true;
         }
     }
 
     void resetChronometer()
     {
-        chronometer.stop();
+        chrono.stop();
         running=false;
-       chronometer.setBase(SystemClock.elapsedRealtime());
+       chrono.setBase(SystemClock.elapsedRealtime());
 
+    }
+
+    void customDialog()
+    {
+        audioDialog=new Dialog(ChatActivity.this,android.R.style.Theme_Light);
+        audioDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        audioDialog.setCancelable(true);
+        audioDialog.setContentView(R.layout.custom_dialog);
+        audioDialog.show();
+
+        final RippleBackground rippleBackground=audioDialog.findViewById(R.id.content);
+        rec=audioDialog.findViewById(R.id.record);
+        pause=audioDialog.findViewById(R.id.pause);
+        reset=audioDialog.findViewById(R.id.reset);
+        upload=audioDialog.findViewById(R.id.upload);
+
+        chrono=audioDialog.findViewById(R.id.chrono);
+        pause.setVisibility(View.GONE);
+
+        rec.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(ContextCompat.checkSelfPermission(ChatActivity.this, Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){
+
+                    ActivityCompat.requestPermissions(ChatActivity.this, new String[] {Manifest.permission.RECORD_AUDIO},1);
+                }
+                else {
+                    pause.setVisibility(View.VISIBLE);
+                    rippleBackground.startRippleAnimation();
+
+                    startChronometer();
+                    startRecording();
+                }
+
+            }
+        });
+
+        upload.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                resetChronometer();
+                rippleBackground.stopRippleAnimation();
+
+                try{
+                    stopRecording();
+                    audioDialog.dismiss();
+                }catch(RuntimeException stopException){
+                    Toast.makeText(ChatActivity.this,"Cant upload empty voice message",Toast.LENGTH_SHORT).show();
+                }
+
+            }
+        });
+
+        audioDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                resetChronometer();
+                rippleBackground.stopRippleAnimation();
+                if(recorder!=null) {
+                    recorder.stop();
+                    recorder.release();
+                    recorder = null;
+                }
+            }
+        });
     }
 }
