@@ -1,13 +1,17 @@
 package com.example.android.mychat;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.SystemClock;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -95,6 +99,15 @@ public class ChatActivity extends AppCompatActivity {
 
         chronometer=findViewById(R.id.chronometer);
 
+        if(ContextCompat.checkSelfPermission(ChatActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)!=PackageManager.PERMISSION_GRANTED){
+
+            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE},1);
+        }
+        if(ContextCompat.checkSelfPermission(ChatActivity.this, Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){
+
+            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.RECORD_AUDIO},1);
+        }
+
         record=findViewById(R.id.record);
         fileName=Environment.getExternalStorageDirectory().getAbsolutePath();
         fileName+="/rec_audio.3gp";
@@ -157,9 +170,15 @@ public class ChatActivity extends AppCompatActivity {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if(event.getAction()==MotionEvent.ACTION_DOWN){
-                    chronometer.setVisibility(View.VISIBLE);
-                    startChronometer();
-                    startRecording();
+                    if(ContextCompat.checkSelfPermission(ChatActivity.this, Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){
+
+                        ActivityCompat.requestPermissions(ChatActivity.this, new String[] {Manifest.permission.RECORD_AUDIO},1);
+                    }
+                    else {
+                        chronometer.setVisibility(View.VISIBLE);
+                        startChronometer();
+                        startRecording();
+                    }
                     //Toast.makeText(ChatActivity.this,"Recording Started...",Toast.LENGTH_SHORT).show();
 
                 }
