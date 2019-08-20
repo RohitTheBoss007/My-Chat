@@ -483,31 +483,25 @@ public class ChatActivity extends AppCompatActivity {
         audioDialog.show();
 
         final RippleBackground rippleBackground=audioDialog.findViewById(R.id.content);
-        rec=audioDialog.findViewById(R.id.record);
-        pause=audioDialog.findViewById(R.id.pause);
-        reset=audioDialog.findViewById(R.id.reset);
+
         upload=audioDialog.findViewById(R.id.upload);
 
         chrono=audioDialog.findViewById(R.id.chrono);
-        pause.setVisibility(View.GONE);
 
-        rec.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+
+
                 if(ContextCompat.checkSelfPermission(ChatActivity.this, Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){
 
                     ActivityCompat.requestPermissions(ChatActivity.this, new String[] {Manifest.permission.RECORD_AUDIO},1);
                 }
-                else {
-                    pause.setVisibility(View.VISIBLE);
+
+
                     rippleBackground.startRippleAnimation();
 
                     startChronometer();
                     startRecording();
-                }
 
-            }
-        });
+
 
         upload.setOnClickListener(new View.OnClickListener() {
             @Override
